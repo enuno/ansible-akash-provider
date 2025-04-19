@@ -1,0 +1,33 @@
+---
+# Core Configuration
+akash_version: "0.19.7"
+helm_chart_version: "0.4.2"
+chain_id: "akashnet-2"
+provider_fqdn: "provider.example.com"
+akash_node_rpc: "http://akash-node:26657"
+
+# Resource Defaults
+provider_cpu_limit: "2"
+provider_memory_limit: "4Gi"
+provider_cpu_request: "1"
+provider_memory_request: "2Gi"
+
+# Storage Configuration
+storage_class: "akash-ssd"
+persistence_size: "100Gi"
+persistent_storage_enabled: true
+
+# Economic Parameters
+bid_price: "1000"
+ip_lease_price: "500"
+ip_leases_enabled: true
+
+# Security Config
+tls_enabled: true
+akash_namespace: "akash-services"
+provider_config_path: "/.akash"
+helm_timeout: "10m"
+
+# Feature Flags
+enable_audit_logging: true
+enable_metrics: true

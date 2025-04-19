@@ -1,0 +1,26 @@
+---
+# Rook Ceph Configuration
+rook_ceph_version: "1.12.2"
+rook_namespace: "rook-ceph"
+ceph_cluster_name: "akash-ceph"
+min_osd_count: 3
+osd_devices: ["/dev/sdb"]  # List raw block devices
+
+# StorageClass Parameters
+storage_class_name: "akash-ssd"
+make_default_storage_class: true
+volume_binding_mode: WaitForFirstConsumer
+allow_volume_expansion: true
+
+# Akash Integration
+akash_namespace: "akash-services"
+persistent_storage_enabled: true
+
+# Performance Tuning
+ceph_pool_replica_size: 3
+ceph_metadata_size: "10Gi"
+ceph_data_size: "100Gi"
+
+# Security Context
+ceph_run_as_user: 2010
+ceph_run_as_group: 2010

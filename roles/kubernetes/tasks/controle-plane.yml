@@ -1,0 +1,11 @@
+- name: Initialize control plane
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  register: kubeadm_init
+
+- name: Configure kubectl access
+  copy:
+    content: "{{ kubeadm_init.stdout }}"
+    dest: /root/.kube/config
+
+- name: Apply network plugin
+  command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml

@@ -1,0 +1,30 @@
+image:
+  repository: ghcr.io/akash-network/provider
+  tag: "{{ akash_version }}"
+  pullPolicy: IfNotPresent
+
+provider:
+  config: "/.akash/provider.yaml"
+  chainid: "{{ chain_id }}"
+
+resources:
+  limits:
+    cpu: "{{ provider_cpu_limit }}"
+    memory: "{{ provider_memory_limit }}"
+  requests:
+    cpu: "{{ provider_cpu_request }}"
+    memory: "{{ provider_memory_request }}"
+
+persistence:
+  enabled: true
+  storageClass: "{{ storage_class }}"
+  size: "{{ persistence_size }}"
+
+service:
+  type: LoadBalancer
+  annotations:
+    {% if tls_enabled %}
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    {% endif %}
+    metallb.universe.tf/address-pool: provider-pool

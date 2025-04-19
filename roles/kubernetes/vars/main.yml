@@ -1,0 +1,74 @@
+---
+# Core Kubernetes Configuration
+k8s_version: "1.28.4"
+container_runtime: "containerd"
+crio_version: "1.28.0"
+pod_network_cidr: "10.244.0.0/16"
+service_cidr: "10.96.0.0/12"
+dns_domain: "cluster.local"
+cluster_name: "akash-cluster"
+
+# Network Plugin Configuration
+network_plugin: "calico"
+calico_version: "3.26.1"
+calico_mtu: "1440"
+network_policy_enforcement: "Always"
+
+# Runtime Configuration
+containerd_version: "1.7.3"
+containerd_config_template: "containerd.conf.j2"
+gvisor_enabled: false
+
+# Cluster Bootstrap
+control_plane_endpoint: "k8s-api.akash.example:6443"
+bootstrap_token_ttl: "24h0m0s"
+certificate_key_ttl: "8760h"  # 1 year
+taint_control_plane: true
+
+# Resource Management
+kubelet_system_reserved:
+  cpu: "500m"
+  memory: "1Gi"
+  ephemeral-storage: "5Gi"
+kubelet_eviction_hard:
+  memory.available: "200Mi"
+  nodefs.available: "10%"
+
+# Akash-Specific Optimizations
+akash_kubelet_params:
+  max-pods: "250"
+  pod-pids-limit: "4096"
+  serialize-image-pulls: "false"
+
+# Storage Configuration
+default_storage_class: "akash-ssd"
+rook_ceph_version: "1.12.2"
+ceph_cluster_spec:
+  mon_count: 3
+  osd_devices: "/dev/sdb"
+
+# Security Configuration
+api_server_extra_args:
+  audit-log-path: /var/log/kubernetes/audit.log
+  audit-policy-file: /etc/kubernetes/audit-policy.yaml
+  encryption-provider-config: /etc/kubernetes/encryption.conf
+
+pod_security_admission:
+  enabled: true
+  profile: "restricted"
+
+# Helm Configuration
+helm_version: "3.12.3"
+akash_helm_values:
+  provider:
+    chainid: "akashnet-2"
+    bid_timeout: "30m"
+    lease_funds_check_interval: "15m"
+
+# Node Requirements
+minimum_systemd_version: "250"
+required_kernel_modules:
+  - overlay
+  - br_netfilter
+  - ebtables
+  - ip_vs

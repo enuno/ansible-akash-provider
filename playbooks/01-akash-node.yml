@@ -1,0 +1,27 @@
+---
+- name: Deploy Akash Blockchain Node
+  hosts: akash_nodes
+  become: true
+  vars_files:
+    - ../vault/secrets.yml
+  pre_tasks:
+    - name: Validate disk space
+      ansible.builtin.assert:
+        that:
+          - ansible_mounts | json_query('[?mount=="/opt/akash"].size_available') | int > 50000000000
+        fail_msg: "Insufficient disk space (minimum 50GB required)"
+
+  roles:
+    - role: chrony
+      tags: [chrony, time]
+    - role: akash-node
+      tags: [akash, blockchain]
+
+  post_tasks:
+    - name: Wait for node synchronization
+      ansible.builtin.command: akash status --node {{ akash_node_rpc }}  # Fixed FQCN
+      register: node_status
+      changed_when: false  # Added no-changed-when fix
+      until: node_status.stdout | from_json | json_query('SyncInfo.catching_up') == 'false'
+      retries: 30
+      delay: 10

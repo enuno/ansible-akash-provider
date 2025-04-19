@@ -1,0 +1,25 @@
+---
+- name: Configure Provider Advanced Features
+  hosts: providers
+  become: true
+  vars_files:
+    - ../vault/secrets.yml
+    - ../inventories/production/group_vars/providers.yml
+  serial: 1
+
+  roles:
+    - role: tls-certs
+      tags: [security, tls]
+    - role: ip-leases
+      tags: [networking, metallb]
+    - role: persistent-storage
+      tags: [storage, ceph]
+
+  post_tasks:
+    - name: Final provider health check
+      ansible.builtin.command: akash provider-status
+      register: health
+      changed_when: false
+      failed_when:
+        - "'ERROR' in health.stdout"
+        - "'unhealthy' in health.stdout"

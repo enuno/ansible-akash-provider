@@ -1,0 +1,42 @@
+---
+# Kubernetes Cluster Configuration
+k8s_version: "1.28.4"
+k8s_network_plugin: "calico"
+pod_network_cidr: "10.244.0.0/16"
+service_cidr: "10.96.0.0/12"
+k8s_api_endpoint: "k8s-api.example.com:6443"
+
+# Container Runtime Configuration
+container_runtime: "containerd"
+containerd_version: "1.7.3"
+
+# Helm Configuration
+helm_version: "3.12.3"
+akash_helm_repo: "https://akash-network.github.io/helm-charts"
+akash_provider_chart_version: "0.4.2"
+
+# Persistent Storage Configuration
+default_storage_class: "akash-storage"
+storage_provisioner: "rook-ceph"
+ceph_cluster_namespace: "rook-ceph"
+
+# Cluster Node Configuration
+control_plane_extra_args:
+  - "--apiserver-advertise-address=0.0.0.0"
+  - "--feature-gates=IPv6DualStack=true"
+
+worker_join_timeout: "600s"
+
+# Akash-Specific Kubernetes Config
+akash_namespace: "akash-services"
+akash_node_service: "http://akash-node:26657"
+
+# Network Policies
+enable_network_policies: true
+allowed_ingress_cidrs:
+  - "0.0.0.0/0"
+
+# System Requirements
+minimum_cpu: 4
+minimum_memory: "8Gi"
+disk_mount_path: "/var/lib/akash-provider"

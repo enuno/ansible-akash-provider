@@ -1,0 +1,9 @@
+# For k8s_cluster group
+chrony_ntp_servers:
+  - 0.rhel.pool.ntp.org
+  - 1.rhel.pool.ntp.org
+enable_hw_timestamping: true
+
+# For akash_nodes group 
+chrony_local_stratum: true
+chrony_allow_network: 192.168.1.0/24

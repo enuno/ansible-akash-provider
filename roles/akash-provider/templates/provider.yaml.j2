@@ -1,0 +1,36 @@
+host: "https://{{ provider_fqdn }}"
+node: "{{ akash_node_rpc }}"
+from: "{{ provider_key_name }}"
+keyring-backend: file
+home: "{{ provider_config_path }}"
+
+attributes:
+  - key: region
+    value: "{{ cluster_region }}"
+  - key: host
+    value: "{{ provider_fqdn }}"
+  {% if persistent_storage_enabled %}
+  - key: capabilities/storage/1/class
+    value: beta3
+  - key: capabilities/storage/1/persistent
+    value: "true"
+  {% endif %}
+
+bid_price:
+  denom: uakt
+  amount: "{{ bid_price }}"
+
+{% if ip_leases_enabled %}
+ip_leases:
+  enabled: true
+  price:
+    denom: uakt
+    amount: "{{ ip_lease_price }}"
+{% endif %}
+
+{% if tls_enabled %}
+tls:
+  enabled: true
+  cert: "/etc/letsencrypt/live/{{ provider_fqdn }}/fullchain.pem" 
+  key: "/etc/letsencrypt/live/{{ provider_fqdn }}/privkey.pem"
+{% endif %}

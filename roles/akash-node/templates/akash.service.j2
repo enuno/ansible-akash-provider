@@ -1,0 +1,41 @@
+[Unit]
+Description=Akash Node Service ({{ chain_id }})
+After=network.target
+Documentation=https://akash.network/docs
+
+[Service]
+Type=simple
+User=akash
+Group=akash
+ExecStart=/usr/local/bin/akash start \
+  --home {{ akash_home }} \
+  --chain-id {{ chain_id }} \
+  --rpc.laddr tcp://0.0.0.0:26657 \
+  --p2p.laddr tcp://0.0.0.0:26656 \
+  --grpc.enable \
+  --grpc.address 0.0.0.0:9090 \
+  {% if enable_rosetta %}--rosetta \{% endif %}
+  {% for flag in extra_flags %}{{ flag }} \{% endfor %}
+  --log_format json
+
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+MemoryMax={{ node_memory_limit | default('4G') }}
+CPUQuota={{ node_cpu_limit | default('200%') }}
+Environment="AKASH_HOME={{ akash_home }}"
+Environment="DAEMON_NAME=akash"
+Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
+Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
+
+# Security hardening
+ProtectSystem=full
+ReadWritePaths={{ akash_home }}/data
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

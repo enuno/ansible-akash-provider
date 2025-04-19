@@ -1,0 +1,9 @@
+- name: Deploy Akash Provider chart
+  community.kubernetes.helm:
+    name: akash-provider
+    chart_ref: akash-network/akash-provider
+    chart_version: "{{ helm_chart_version }}"
+    release_namespace: "{{ k8s_namespace }}"
+    values:
+      provider:
+        config: "{{ provider_config_path }}"

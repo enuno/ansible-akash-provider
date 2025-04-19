@@ -1,0 +1,94 @@
+---
+- name: Install Kubernetes dependencies
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+
+- name: Add Kubernetes GPG key
+  ansible.builtin.apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Add Kubernetes repo
+  ansible.builtin.apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    state: present
+    filename: kubernetes
+
+- name: Install Kubernetes components
+  ansible.builtin.apt:
+    name:
+      - kubelet={{ k8s_version }}-00
+      - kubeadm={{ k8s_version }}-00
+      - kubectl={{ k8s_version }}-00
+    state: present
+    allow_downgrade: true
+
+- name: Disable swap
+  ansible.builtin.shell: |
+    swapoff -a
+    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+  changed_when: false
+
+- name: Load kernel modules
+  ansible.builtin.shell: |
+    modprobe br_netfilter
+    modprobe ip_vs
+  changed_when: false
+
+- name: Configure sysctl
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+
+- name: Initialize control plane (master)
+  ansible.builtin.command: |
+    kubeadm init \
+      --control-plane-endpoint "{{ control_plane_endpoint }}" \
+      --pod-network-cidr {{ pod_network_cidr }} \
+      --service-cidr {{ service_cidr }} \
+      --upload-certs \
+      --certificate-key "{{ certificate_key | default(omit) }}"
+  args:
+    creates: /etc/kubernetes/admin.conf
+  when: inventory_hostname in groups['k8s_control_plane']
+
+- name: Configure kubectl for admin user
+  ansible.builtin.copy:
+    dest: /root/.kube/config
+    content: "{{ lookup('file', '/etc/kubernetes/admin.conf') }}"
+    mode: 0600
+  when: inventory_hostname in groups['k8s_control_plane']
+
+- name: Generate worker join command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: join_command
+  changed_when: false
+  when: inventory_hostname in groups['k8s_control_plane']
+
+- name: Join worker nodes
+  ansible.builtin.command: "{{ join_command.stdout }}"
+  when: 
+    - inventory_hostname in groups['k8s_workers']
+    - join_command.stdout is defined
+
+- name: Install network plugin (Calico)
+  ansible.builtin.command: |
+    kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+  when: inventory_hostname in groups['k8s_control_plane']
+
+- name: Verify cluster status
+  ansible.builtin.command: kubectl get nodes
+  register: node_status
+  changed_when: false
+  until: "'Ready' in node_status.stdout"
+  retries: 10
+  delay: 30
+  when: inventory_hostname in groups['k8s_control_plane']

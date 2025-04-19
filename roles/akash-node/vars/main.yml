@@ -1,0 +1,5 @@
+# roles/akash-node/vars/main.yml
+akash_home: "/opt/akash"
+chain_id: "akashnet-2"
+enable_rosetta: false
+extra_flags: []

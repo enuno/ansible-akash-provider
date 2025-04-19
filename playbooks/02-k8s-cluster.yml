@@ -1,0 +1,37 @@
+---
+- name: Provision Kubernetes Cluster
+  hosts: k8s_control_plane:&initial
+  become: true
+  vars_files:
+    - ../inventories/production/group_vars/k8s_cluster.yml
+  pre_tasks:
+    - name: Validate kernel modules
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          lsmod |
+          grep -E 'br_netfilter|ip_vs'
+        executable: /bin/bash
+      register: kernel_modules
+      changed_when: false
+      failed_when: kernel_modules.rc != 0
+
+  roles:
+    - role: kubernetes
+      tags: [k8s, control-plane]
+
+- name: Join Worker Nodes
+  hosts: k8s_workers
+  become: true
+  vars_files:
+    - ../inventories/production/group_vars/k8s_cluster.yml
+
+  roles:
+    - role: kubernetes
+      tags: [k8s, workers]
+
+  post_tasks:
+    - name: Validate cluster health
+      ansible.builtin.command: kubectl get nodes -o wide
+      register: nodes
+      changed_when: false

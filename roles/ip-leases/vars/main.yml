@@ -1,0 +1,21 @@
+---
+# MetalLB Configuration
+metallb_chart_version: "0.13.12"
+metallb_namespace: "metallb-system"
+metallb_protocol: "layer2"  # or "bgp"
+
+# IP Allocation Settings
+ip_pool_range: "192.168.1.100-192.168.1.200"
+shared_ips: true
+bgp_peers: []
+  # - peer-address: 10.0.0.1
+  #   peer-asn: 64512
+  #   my-asn: 64513
+
+# Akash Integration
+akash_namespace: "akash-services"
+nodes_count: "{{ groups['k8s_workers'] | length }}"
+
+# Security
+announce_retries: 3
+announce_timeout: 120

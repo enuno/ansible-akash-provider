@@ -1,0 +1,66 @@
+---
+- name: Add Rook Ceph Helm repository
+  kubernetes.core.helm_repository:
+    name: rook-release
+    repo_url: https://charts.rook.io/release
+    update: yes
+
+- name: Install Rook Ceph Operator
+  community.kubernetes.helm:
+    name: rook-ceph
+    chart_ref: rook-release/rook-ceph
+    chart_version: "{{ rook_ceph_version }}"
+    release_namespace: "{{ rook_namespace }}"
+    create_namespace: true
+    wait: true
+
+- name: Create Ceph Cluster CR
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'ceph-cluster.j2') | from_yaml }}"
+    namespace: "{{ rook_namespace }}"
+
+- name: Wait for Ceph OSD pods
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ rook_namespace }}"
+    label_selectors:
+      - "app=rook-ceph-osd"
+  register: osd_pods
+  until: osd_pods.resources | length >= min_osd_count
+  retries: 10
+  delay: 30
+
+- name: Create StorageClass
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: "{{ storage_class_name }}"
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "{{ make_default_storage_class | lower }}"
+      provisioner: rook-ceph.rbd.csi.ceph.com
+      parameters:
+        clusterID: "{{ rook_namespace }}"
+        pool: replicapool
+        imageFormat: "2"
+        imageFeatures: layering
+        csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+        csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+      reclaimPolicy: Delete
+      allowVolumeExpansion: true
+
+- name: Update Akash provider attributes
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: akash.network/v1
+      kind: Provider
+      metadata:
+        name: akash-provider
+        namespace: "{{ akash_namespace }}"
+      spec:
+        attributes:
+          - key: capabilities/storage/1/class
+            value: beta3
+          - key: capabilities/storage/1/persistent
+            value: "true"

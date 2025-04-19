@@ -1,0 +1,25 @@
+- name: Install Akash CLI
+  get_url:
+    url: "https://github.com/akash-network/akash/releases/download/{{ akash_version }}/akash_{{ akash_version }}_linux_amd64.tar.gz"
+    dest: /tmp/akash.tar.gz
+
+- name: Extract and install binary
+  unarchive:
+    src: /tmp/akash.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+
+- name: Initialize Akash node
+  command: akash init {{ node_moniker }} --chain-id {{ chain_id }}
+  args:
+    creates: "{{ akash_home }}/config/config.toml"
+
+- name: Configure genesis file
+  copy:
+    content: "{{ genesis_content }}"
+    dest: "{{ akash_home }}/config/genesis.json"
+
+- name: Create systemd service
+  template:
+    src: akash.service.j2
+    dest: /etc/systemd/system/akashd.service

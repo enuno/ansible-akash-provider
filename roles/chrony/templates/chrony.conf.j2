@@ -1,0 +1,34 @@
+# Managed by Ansible - Chrony Configuration for Akash Provider
+# Last updated: {{ ansible_date_time.iso8601 }}
+
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+logdir /var/log/chrony
+log measurements statistics tracking
+
+{# Primary NTP Servers with Akash-optimized polling #}
+{% for server in chrony_ntp_servers %}
+server {{ server }} iburst minpoll 3 maxpoll 4
+{% endfor %}
+
+{# Local stratum fallback for air-gapped networks #}
+{% if chrony_local_stratum | default(false) %}
+local stratum 8
+allow {{ chrony_allow_network | default('127.0.0.1/8') }}
+{% endif %}
+
+{# Hardware timestamping for improved accuracy #}
+{% if enable_hw_timestamping | default(false) %}
+hwtimestamp *
+{% endif %}
+
+{# NTS configuration for secure time sync #}
+{% if enable_nts | default(false) %}
+ntsserverkey /etc/chrony/nts.key
+ntsservercert /etc/chrony/nts.crt
+{% endif %}
+
+{# Kubernetes node synchronization #}
+{% if 'k8s_control_plane' in group_names %}
+server {{ cluster_ntp_endpoint }} iburst
+{% endif %}

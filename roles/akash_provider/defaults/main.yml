@@ -1,0 +1,3 @@
+bid_price_denom: "uakt"
+bid_price_amount: "1000"
+k8s_namespace: "akash-services"

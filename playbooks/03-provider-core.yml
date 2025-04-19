@@ -1,0 +1,24 @@
+---
+- name: Deploy Akash Provider Core Services
+  hosts: providers
+  become: true
+  vars_files:
+    - ../vault/secrets.yml
+    - ../inventories/production/group_vars/providers.yml
+
+  pre_tasks:
+    - name: Verify Kubernetes cluster access
+      ansible.builtin.command: kubectl cluster-info
+      register: k8s_status
+      changed_when: false  # Added for no-changed-when
+      failed_when: k8s_status.rc != 0
+
+  roles:
+    - role: akash-provider
+      tags: [akash, provider]
+
+  post_tasks:
+    - name: Validate provider registration
+      ansible.builtin.command: akash query provider get {{ provider_address }}
+      register: provider_check
+      changed_when: false

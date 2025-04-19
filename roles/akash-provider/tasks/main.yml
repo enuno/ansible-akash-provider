@@ -1,0 +1,53 @@
+---
+- name: Create Akash provider namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ akash_namespace }}"
+    state: present
+
+- name: Generate provider configuration
+  template:
+    src: provider.yaml.j2
+    dest: "{{ provider_config_path }}/provider.yaml"
+    mode: 0600
+
+- name: Import provider wallet
+  command: |
+    echo "{{ akash_wallet_mnemonic }}" | 
+    akash keys add {{ provider_key_name }} 
+      --recover 
+      --keyring-backend file 
+      --home "{{ provider_config_path }}"
+  args:
+    creates: "{{ provider_config_path }}/keyring-file"
+  no_log: true
+
+- name: Deploy Akash Provider Helm chart
+  community.kubernetes.helm:
+    name: akash-provider
+    chart_ref: akash-network/akash-provider
+    chart_version: "{{ helm_chart_version }}"
+    release_namespace: "{{ akash_namespace }}"
+    values: "{{ lookup('template', 'values.yaml.j2') | from_yaml }}"
+    wait: true
+    timeout: "{{ helm_timeout }}"
+
+- name: Validate provider deployment
+  command: akash provider-status
+  register: provider_status
+  changed_when: false
+  failed_when: 
+    - "'ERROR' in provider_status.stdout"
+    - "'failed' in provider_status.stdout"
+
+- name: Wait for provider readiness
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ akash_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/instance=akash-provider"
+  register: pods
+  until: pods.resources | selectattr('status.containerStatuses', 'defined') | map(attribute='status.containerStatuses') | map('selectattr', 'ready', 'equalto', true) | list | count == 3
+  retries: 10
+  delay: 30

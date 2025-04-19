@@ -1,0 +1,15 @@
+- name: Validate provider deployment
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ k8s_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/name=akash-provider"
+  register: provider_pods
+
+- name: Assert pod readiness
+  assert:
+    that:
+      - "item.status.phase == 'Running'"
+      - "item.status.containerStatuses[0].ready == true"
+    fail_msg: "Provider pod {{ item.metadata.name }} not ready"
+  loop: "{{ provider_pods.resources }}"

@@ -1,0 +1,22 @@
+---
+# Cert-Manager Configuration
+cert_manager_version: "1.13.1"
+
+# Let's Encrypt Settings
+letsencrypt_server: "https://acme-v02.api.letsencrypt.org/directory"
+letsencrypt_issuer_name: "letsencrypt-prod"
+letsencrypt_email: "security@example.com"
+tls_cert_duration: "2160h"  # 90 days
+tls_cert_renew_before: "720h"  # 30 days
+
+# Cloudflare DNS Configuration
+cloudflare_account_email: "dns-admin@example.com"
+cloudflare_api_token: "{{ vault_cloudflare_api_token }}"  # From Ansible Vault
+dns_zone: "example.com"
+provider_fqdn: "provider.example.com"
+
+# Akash Integration
+akash_namespace: "akash-services"
+
+# Environment Flags
+use_staging: false

@@ -1,0 +1,28 @@
+---
+galaxy_info:
+  author: "Your Name"
+  description: "Ansible role for deploying Akash Cloud Provider"
+  company: "Your Organization"
+  license: "Apache-2.0"
+  min_ansible_version: "2.9"
+  platforms:
+    - name: EL
+      versions:
+        - 8
+        - 9
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+  galaxy_tags:
+    - cloud
+    - blockchain
+    - kubernetes
+    - akash
+
+  collections:
+    - kubernetes.core
+    - community.kubernetes
+    - community.general
+
+dependencies: []

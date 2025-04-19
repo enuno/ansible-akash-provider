@@ -1,0 +1,13 @@
+[akash_nodes]
+akash-node-01 ansible_host=192.168.1.50
+
+[k8s_control_plane]
+k8s-cp-01 ansible_host=10.0.0.10
+
+[k8s_workers]
+k8s-worker-01 ansible_host=10.0.0.11
+k8s-worker-02 ansible_host=10.0.0.12
+k8s-worker-03 ansible_host=10.0.0.13
+
+[providers]
+akash-provider-01 ansible_host=provider01.example.com

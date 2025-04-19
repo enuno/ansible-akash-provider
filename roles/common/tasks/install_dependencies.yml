@@ -1,0 +1,9 @@
+- name: Install base packages
+  apt:
+    name: 
+      - curl
+      - git
+      - jq
+      - helm
+    state: present
+  tags: packages

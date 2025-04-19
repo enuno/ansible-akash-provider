@@ -1,0 +1,46 @@
+---
+- name: Install MetalLB LoadBalancer
+  community.kubernetes.helm:
+    name: metallb
+    chart_ref: metallb/metallb
+    chart_version: "{{ metallb_chart_version }}"
+    release_namespace: "{{ metallb_namespace }}"
+    create_namespace: true
+    values:
+      configInline: |
+        {% raw %}
+        address-pools:
+        - name: provider-pool
+          protocol: "{{ metallb_protocol }}"
+          addresses: 
+          - "{{ ip_pool_range }}"
+          {% if metallb_protocol == 'bgp' -%}
+          bgp-advertisements:
+          - aggregation-length: 32
+            communities: []
+            localpref: 0
+          {% endif %}
+        {% endraw %}
+
+- name: Validate MetalLB speaker pods
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ metallb_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/component=speaker"
+  register: speaker_pods
+  until: speaker_pods.resources | length == nodes_count
+  retries: 5
+  delay: 10
+
+- name: Annotate Akash provider service
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Service
+    metadata:
+      name: akash-provider
+      namespace: "{{ akash_namespace }}"
+      annotations:
+        metallb.universe.tf/address-pool: provider-pool
+        metallb.universe.tf/allow-shared-ip: "true"
+    state: present
